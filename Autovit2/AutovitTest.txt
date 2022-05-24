@@ -1,0 +1,159 @@
+package Tests;
+
+import Base.Base;
+import DataBase.DataBase;
+import Help.ElementMethods;
+import Help.PageMethods;
+import Help.TabMethods;
+//import Objects.CumparaturiObject;
+import Objects.SpecificatiiCeruteObject;
+import Objects.SpecificatiiGasiteObject;
+import Property.PropertyUtility;
+import org.junit.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebElement;
+import queries.SQLAutovit;
+//import tests.SQLCumparaturi;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+
+public class AutovitTest extends Base {
+    JavascriptExecutor js = (JavascriptExecutor) driver;
+    public PageMethods pageMethods;
+    public ElementMethods elementMethods;
+    public TabMethods tabMethods;
+    public SQLAutovit sqlAutovit;
+    public SpecificatiiCeruteObject specificatiiCeruteObject;
+    public SpecificatiiGasiteObject specificatiiGasiteObject;
+    DataBase DB = new DataBase();
+
+
+    @Test
+    public void AutovitTest() throws InterruptedException, IOException, SQLException {
+        pageMethods = new PageMethods(driver);
+        elementMethods = new ElementMethods(driver);
+        tabMethods = new TabMethods(driver);
+        sqlAutovit = new SQLAutovit(DB);
+        specificatiiCeruteObject = new SpecificatiiCeruteObject();
+
+        Autovit();
+
+    }
+
+    public void Autovit() throws InterruptedException, IOException, SQLException {
+        //Validare pagina Autovit
+        String ExpectedTitle = "AUTOVIT - Anunturi auto, vanzari autoturisme noi si second hand.";
+        pageMethods.ValidateTitleOfPage(ExpectedTitle);
+
+        //Accept Cookies
+        WebElement Cookies = driver.findElement(By.id("onetrust-accept-btn-handler"));
+        elementMethods.ClickElement(Cookies);
+
+        //Completare date de cautare masini
+        int numberOfRows = sqlAutovit.getNumberRows();
+        for (int indexRows = 1; indexRows <= numberOfRows; indexRows++) {
+            specificatiiCeruteObject = new SpecificatiiCeruteObject();
+            WebElement Marca = driver.findElement(By.id("filter_enum_make"));
+            WebElement Model = driver.findElement(By.id("filter_enum_model"));
+            WebElement Pretmin = driver.findElement(By.id("filter_float_price:from"));
+            WebElement Pretmax = driver.findElement(By.id("filter_float_price:to"));
+            WebElement Anmin = driver.findElement(By.id("filter_float_year:from"));
+            WebElement Anmax = driver.findElement(By.id("filter_float_year:to"));
+//            WebElement Combustibil = driver.findElement(By.id("filter_enum_fuel_type"));
+            WebElement Cauta = driver.findElement(By.xpath("//button[@data-testid='submit-btn']"));
+
+            sqlAutovit.SelectMarca(specificatiiCeruteObject, "MasiniCautate", indexRows);
+            elementMethods.SendKeyElement(Marca, specificatiiCeruteObject.getMarca());
+            elementMethods.SendEnterElement(Marca);
+            elementMethods.WaitAfeterClickableElement(Model);
+            sqlAutovit.SelectModel(specificatiiCeruteObject, "MasiniCautate", indexRows);
+            elementMethods.SendKeyElement(Model, specificatiiCeruteObject.getModel());
+            elementMethods.SendEnterElement(Model);
+            sqlAutovit.SelectPretmin(specificatiiCeruteObject, "MasiniCautate", indexRows);
+            elementMethods.SendKeyElement(Pretmin, specificatiiCeruteObject.getPretmin());
+            elementMethods.SendEnterElement(Pretmin);
+            sqlAutovit.SelectPretmax(specificatiiCeruteObject, "MasiniCautate", indexRows);
+            elementMethods.SendKeyElement(Pretmax, specificatiiCeruteObject.getPretmax());
+            elementMethods.SendEnterElement(Pretmax);
+            sqlAutovit.SelectAnmin(specificatiiCeruteObject, "MasiniCautate", indexRows);
+            elementMethods.SendKeyElement(Anmin, specificatiiCeruteObject.getAnmin());
+            elementMethods.SendEnterElement(Anmin);
+            sqlAutovit.SelectAnmax(specificatiiCeruteObject, "MasiniCautate", indexRows);
+            elementMethods.SendKeyElement(Anmax, specificatiiCeruteObject.getAnmax());
+            elementMethods.SendEnterElement(Anmax);
+            sqlAutovit.SelectCombustibil(specificatiiCeruteObject, "MasiniCautate", indexRows);
+//            elementMethods.SendKeyElement(Combustibil, specificatiiCeruteObject.getCombustibil());
+//            elementMethods.SendEnterElement(Combustibil);
+//            elementMethods.WaitElementtoFill("Benzina", Combustibil);
+            elementMethods.ClickElement(Cauta);
+            WebElement Combustibil = driver.findElement(By.xpath("//li/input[@placeholder='Combustibil']"));
+            elementMethods.WaitAfterVisibleElement(Combustibil);
+            elementMethods.SendKeyElement(Combustibil, specificatiiCeruteObject.getCombustibil());
+            elementMethods.SendEnterElement(Combustibil);
+            pageMethods.ScrollSmooth();
+
+            //Cautare date in lista de rezultate si introducere in DB
+            List<WebElement> Rezultate= driver.findElements(By.xpath("//div[@class='offers list']/article"));
+            int index=0;
+            while (index < Rezultate.size()){
+//                elementMethods.scrollDownBitPage();
+                //facem un obiect de tipul SpecificatiiGasiteObject pe care il populam cu valorile de mai jos
+                SpecificatiiGasiteObject specificatiiGasiteObject = new SpecificatiiGasiteObject();
+                int countArticle=index+1;
+                WebElement DenumireGasita = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]//h2/a"));
+                elementMethods.HoverElement(DenumireGasita);
+                String Denumire = DenumireGasita.getAttribute("title");
+                specificatiiGasiteObject.setDenumire(DenumireGasita.getAttribute("title"));
+//                WebElement DescriereGasita = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]//h3"));
+//                String Descriere = DescriereGasita.getText();
+//                specificatiiGasiteObject.setDescriere(DescriereGasita.getText());
+                WebElement MotorizareGasita = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]/ul/li[4]/span"));
+//                String Motorizare = MotorizareGasita.getText();
+                specificatiiGasiteObject.setMotorizare(MotorizareGasita.getText());
+                WebElement KmGasiti = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]/ul/li[2]/span"));
+//                String Km = KmGasiti.getText();
+                specificatiiGasiteObject.setKm(KmGasiti.getText());
+                WebElement AnGasit = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]/ul/li[1]/span"));
+//                String An = AnGasit.getText();
+                specificatiiGasiteObject.setAn(AnGasit.getText());
+                WebElement LocatieGasita = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]/h4/span[@class='ds-location-city']"));
+//                String Locatie = LocatieGasita.getText();
+                specificatiiGasiteObject.setLocatie(LocatieGasita.getText());
+                WebElement PretGasit = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]/div[2]/div/div/span/span[1]"));
+//                String Pret = PretGasit.getText();
+                specificatiiGasiteObject.setPret(PretGasit.getText());
+                WebElement LinkGasit = driver.findElement(By.xpath("//div[@class='offers list']/article["+countArticle+"]/div[2]/div[1]/h2/a[@href]"));
+//                String Link = LinkGasit.getAttribute("href");
+                specificatiiGasiteObject.setLink(LinkGasit.getAttribute("href"));
+//                sqlAutovit.InsertDescriere(specificatiiGasiteObject, "MasiniGasite");
+
+//                System.out.println(Denumire);
+//                System.out.println(Descriere);
+//                System.out.println(Motorizare);
+//                System.out.println(Km);
+//                System.out.println(An);
+//                System.out.println(Locatie);
+//                System.out.println(Pret);
+//                System.out.println(Link);
+
+                System.out.println(DenumireGasita);
+//                System.out.println(DescriereGasita);
+                System.out.println(MotorizareGasita);
+                System.out.println(KmGasiti);
+                System.out.println(AnGasit);
+                System.out.println(LocatieGasita);
+                System.out.println(PretGasit);
+                System.out.println(LinkGasit);
+
+
+                index++;
+            }
+            driver.get("https://www.autovit.ro/");
+
+        }
+    }
+}

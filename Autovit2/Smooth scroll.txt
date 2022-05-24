@@ -1,0 +1,8 @@
+    //Smooth Scroll
+    public void ScrollSmooth(){
+        double Height = driver.manage().window().getSize().height;
+        for
+        (int i=0;i<Height;i++) {
+            ((JavascriptExecutor) driver).executeScript("window.scrollBy(0,1)", "");
+        }
+    }
